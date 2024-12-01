@@ -4,38 +4,56 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    private float speed = 5f; // Hareket hýzý
+    private float speed;
     private CharacterController controller;
-    private float mouseSensitivity = 100f; // Mouse hassasiyeti
-    private float yRotation = 0f; // Y ekseni rotasyonu
-    private Transform cameraTransform; // Kamera dönüþü için
+    private float mouseSensitivity;
+    private float yRotation;
+    private Transform cameraTransform;
+    private Animator animator;  // Animator referansÄ±
 
     void Start()
     {
-        controller = GetComponent<CharacterController>();
-        cameraTransform = Camera.main.transform; // Ana kamerayý al
+        speed = 2f;
+        mouseSensitivity = 600f;
+        yRotation = 0f;
+        controller = GetComponentInChildren<CharacterController>();
+        cameraTransform = Camera.main.transform;
+        animator = GetComponent<Animator>();  // Animator bileÅŸenini alÄ±yoruz
     }
 
     void Update()
     {
-        // Mouse hareketine göre karakterin rotasyonunu ayarla
+        // Mouse hareketini al
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         yRotation += mouseX;
 
-        // Karakteri yalnýzca y ekseninde döndür
+        // Karakterin rotasyonunu gÃ¼ncelle
         transform.rotation = Quaternion.Euler(0f, yRotation, 0f);
 
-        // Kamera için rotasyonu uygula
-        cameraTransform.rotation = Quaternion.Euler(cameraTransform.rotation.eulerAngles.x, yRotation, 0f);
+        // KamerayÄ± karaktere baÄŸÄ±mlÄ± hale getir
+        cameraTransform.rotation = Quaternion.Euler(0f, yRotation, 0f);
 
-        // Klavye girdileri ile hareket et
+        // Hareket giriÅŸlerini al
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
 
-        // Hareket yönünü mouse yönüne göre ayarla
         Vector3 move = transform.right * moveHorizontal + transform.forward * moveVertical;
 
         // Hareketi uygula
         controller.Move(move * speed * Time.deltaTime);
+
+        // EÄŸer hareket ediyorsa, IsWalking parametresini true yap, duruyorsa false yap
+        bool isWalking = move.magnitude > 0.1f;  // EÄŸer hareketin bÃ¼yÃ¼klÃ¼ÄŸÃ¼ kÃ¼Ã§Ã¼kse, karakter duruyor demektir.
+
+        // EÄŸer karakter hareket ediyorsa, Idle animasyonunu bypass et ve Walking animasyonuna geÃ§
+        if (isWalking && (moveHorizontal != 0 || moveVertical != 0))
+        {            
+            animator.SetBool("IsWalking", true);  // Hareket baÅŸladÄ±, IsWalking true
+        }
+        else
+        {
+            animator.StopPlayback();
+            animator.SetBool("IsWalking", false);   // GeÃ§iÅŸ sÃ¼resi dÃ¼ÅŸÃ¼k tutulmalÄ±.
+        }
     }
 }
